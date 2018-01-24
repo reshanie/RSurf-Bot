@@ -1,4 +1,3 @@
-import sys
 import time
 from datetime import timedelta
 
@@ -6,10 +5,10 @@ import discord
 import outlet
 from outlet import errors, Member, RelativeTime
 
-from bot.database import Session, Timeout
+from bot.plugins.resources import database
 from functools import wraps
 
-db = Session()
+db = database.Session()
 
 RSURF_PUNISHED = 353641063199801347
 
