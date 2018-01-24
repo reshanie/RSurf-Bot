@@ -15,7 +15,7 @@ Session = sessionmaker()
 # SQL Table Models
 
 
-class Timeouts(Base):
+class Timeout(Base):
     __tablename__ = "timeouts"
 
     user_id = Column(Numeric, primary_key=True)
@@ -23,6 +23,8 @@ class Timeouts(Base):
 
     expires = Column(Numeric)  # epoch when timeout is over
     roles = Column(Text)  # use text to record role id's, e.g., "1234545353453543|7693956806835636|4356346356"
+
+    reason = Column(Text)
 
 
 # Engine

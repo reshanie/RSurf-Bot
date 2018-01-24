@@ -1,10 +1,12 @@
-import outlet
 import time
-import discord
+from datetime import timedelta
 
+import discord
+import outlet
 from outlet import errors, Member, RelativeTime
 
-from bot.database import Session, Timeouts
+from bot.database import Session, Timeout
+from functools import wraps
 
 db = Session()
 
@@ -29,6 +31,27 @@ def get_roles_from_string(guild, role_string):
     return roles
 
 
+def seconds_to_str(s):
+    return str(timedelta(0, s))
+
+
+# decorators
+
+
+def debug_only(func):
+    if getattr(func, "is_command", False):
+        raise SyntaxError("@debug_only decorator should be placed under the @command decorator")
+
+    @wraps(func)
+    async def new_func(self_, ctx, *args):
+        if ctx.author.id != 231658954831298560:
+            raise errors.MissingPermission("This is a debug command and can only be used by reshanie#7510")
+
+        await func(self_, ctx, *args)
+
+    return new_func
+
+
 # plugin
 
 # noinspection PyTypeChecker
@@ -36,7 +59,10 @@ class Plugin(outlet.Plugin):
     __plugin__ = "Punishment"
 
     async def timeout_user(self, member, seconds, reason):
-        timeout = db.query(Timeouts).filter_by(user_id=member.id).first()
+        if member.bot:
+            raise errors.ArgumentError("Bots can't be put in timeout.")
+
+        timeout = db.query(Timeout).filter_by(user_id=member.id).first()
         if timeout:
             raise errors.CommandError("{} is already in timeout.".format(member))
 
@@ -50,7 +76,8 @@ class Plugin(outlet.Plugin):
         roles = get_role_string(member)
         expires = int(time.time() + seconds)
 
-        timeout = Timeouts(user_id=member.id, guild_id=member.guild.id, expires=expires, roles=roles)
+        timeout = Timeout(user_id=member.id, guild_id=member.guild.id, expires=expires, roles=roles,
+                          reason=reason or "None given.")
 
         try:
             # replace roles
@@ -63,18 +90,19 @@ class Plugin(outlet.Plugin):
             self.log.debug("committing db")
             db.commit()
 
-    async def remove_from_timeout(self, member):
-        timeout = db.query(Timeouts).filter_by(user_id=member.id).first()
+    async def remove_from_timeout(self, user_id, guild, member=None):
+        timeout = db.query(Timeout).filter_by(user_id=user_id).first()
 
         if not timeout:
             raise errors.ArgumentError("{!s} isn't in timeout".format(member))
 
-        self.log.info("removing {!s} from timeout in {!s}".format(member, member.guild))
+        self.log.info("removing {!s} from timeout in {!s}".format(member or user_id, guild))
 
-        roles = get_roles_from_string(member.guild, timeout.roles)
+        roles = get_roles_from_string(guild, timeout.roles)
 
         try:
-            await member.edit(roles=roles, reason="Timeout ended.")
+            if member:  # don't remove roles if not in guild
+                await member.edit(roles=roles, reason="Timeout ended.")
         except discord.errors.Forbidden:
             raise errors.CommandError("Make sure I have the permissions to give roles back to {!s}".format(member))
         else:
@@ -82,6 +110,13 @@ class Plugin(outlet.Plugin):
 
             self.log.debug("committing db")
             db.commit()
+
+            if member:
+                # notify user if possible
+                try:
+                    await member.send("Your timeout in {} is over.".format(member.guild))
+                except discord.errors.Forbidden:
+                    pass
 
     @outlet.run_every(10)
     async def check_timeouts(self):
@@ -93,7 +128,7 @@ class Plugin(outlet.Plugin):
 
         epoch = time.time()
 
-        for timeout in db.query(Timeouts):
+        for timeout in db.query(Timeout):
             guild = self.bot.get_guild(timeout.guild_id)
 
             if guild is None:  # make sure bot is still in guild
@@ -104,17 +139,11 @@ class Plugin(outlet.Plugin):
 
             member = guild.get_member(timeout.user_id)
 
-            if member is None:  # make sure member is still in guild
-                self.log.debug("user is no longer in guild. removing timeout")
-
-                db.delete(timeout)
-                continue
-
             if timeout.expires < epoch:  # timeout expired
                 self.log.info("timeout expired for {!s} in {!s}".format(member, guild))
 
                 try:
-                    self.create_task(self.remove_from_timeout(member))
+                    self.create_task(self.remove_from_timeout(member.id, guild, member=member))
                 except errors.CommandError:
                     pass
 
@@ -122,17 +151,43 @@ class Plugin(outlet.Plugin):
         db.commit()
 
     @outlet.command("timeout")
-    @outlet.require_permissions("manage_roles")
+    # @outlet.require_permissions("manage_roles")
+    @debug_only
     async def timeout_cmd(self, ctx, user: Member, length: RelativeTime, *reason):
-        reason = " ".join(reason)
+        """GIve a user timeout with an optional reason."""
+
+        reason = " ".join(reason) if reason else "no reason given."
 
         self.log.info("{} given {} second timeout in {}".format(user, length, user.guild))
 
         await self.timeout_user(user, length, reason)
 
     @outlet.command("untimeout")
-    @outlet.require_permissions("manage_roles")
+    # @outlet.require_permissions("manage_roles")
+    @debug_only
     async def untimeout_cmd(self, ctx, user: Member):
-        await self.remove_from_timeout(user)
+        """Remove a user from timeout."""
+
+        await self.remove_from_timeout(user.id, user.guild, user)
 
         await ctx.send("Removed {!s} from timeout.".format(user))
+
+    @outlet.command("timeouts")
+    async def list_timeouts(self, ctx):
+        """List active timeouts for the guild"""
+
+        timeouts = db.query(Timeout).filter_by(guild_id=ctx.guild.id).all()
+
+        msg = "__**Timeouts**__\n\n"
+
+        for timeout in timeouts:
+            member = ctx.guild.get_member(timeout.user_id)
+
+            if member is None:
+                continue
+
+            time_left = max(0, int(timeout.expires) - int(time.time()))  # can take up to 10 seconds to remove timeout
+
+            msg += "{}: {} Reason: {}".format(member, seconds_to_str(time_left), timeout.reason)
+
+        await ctx.send(msg if timeouts else "No one is in timeout.")
