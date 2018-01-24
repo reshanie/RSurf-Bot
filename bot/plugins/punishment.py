@@ -151,8 +151,6 @@ class Plugin(outlet.Plugin):
                 except errors.CommandError:
                     pass
 
-        self.log.debug("committing db")
-        db.commit()
 
     @outlet.command("timeout")
     @outlet.require_permissions("manage_roles")
