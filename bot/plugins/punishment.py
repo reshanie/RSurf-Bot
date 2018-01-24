@@ -151,11 +151,10 @@ class Plugin(outlet.Plugin):
                 except errors.CommandError:
                     pass
 
-
     @outlet.command("timeout")
     @outlet.require_permissions("manage_roles")
     async def timeout_cmd(self, ctx, user: Member, length: RelativeTime, *reason):
-        """GIve a user timeout with an optional reason."""
+        """Give a user timeout with an optional reason."""
 
         reason = " ".join(reason) if reason else "No reason given."
 
