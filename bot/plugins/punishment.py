@@ -9,10 +9,10 @@ import sys
 
 sys.path.insert(0, "bot/plugins/resources/")
 
-import database
+from database import Session, Timeout
 from functools import wraps
 
-db = database.Session()
+db = Session()
 
 RSURF_PUNISHED = 353641063199801347
 
