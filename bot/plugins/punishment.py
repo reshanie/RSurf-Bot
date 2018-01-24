@@ -151,20 +151,18 @@ class Plugin(outlet.Plugin):
         db.commit()
 
     @outlet.command("timeout")
-    # @outlet.require_permissions("manage_roles")
-    @debug_only
+    @outlet.require_permissions("manage_roles")
     async def timeout_cmd(self, ctx, user: Member, length: RelativeTime, *reason):
         """GIve a user timeout with an optional reason."""
 
-        reason = " ".join(reason) if reason else "no reason given."
+        reason = " ".join(reason) if reason else "No reason given."
 
         self.log.info("{} given {} second timeout in {}".format(user, length, user.guild))
 
         await self.timeout_user(user, length, reason)
 
     @outlet.command("untimeout")
-    # @outlet.require_permissions("manage_roles")
-    @debug_only
+    @outlet.require_permissions("manage_roles")
     async def untimeout_cmd(self, ctx, user: Member):
         """Remove a user from timeout."""
 
