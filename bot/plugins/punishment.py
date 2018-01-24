@@ -5,7 +5,11 @@ import discord
 import outlet
 from outlet import errors, Member, RelativeTime
 
-from bot.plugins.resources import database
+import sys
+
+sys.path.insert(0, "bot/plugins/resources/")
+
+import database
 from functools import wraps
 
 db = database.Session()
