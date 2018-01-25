@@ -182,8 +182,7 @@ class Plugin(outlet.Plugin):
                     pass
 
     @outlet.command("timeout")
-    # @outlet.require_permissions("manage_roles")
-    @debug_only
+    @outlet.require_permissions("manage_roles")
     async def timeout_cmd(self, ctx, user: Member, length: RelativeTime, *reason):
         """Give a user timeout with an optional reason."""
 
@@ -201,8 +200,7 @@ class Plugin(outlet.Plugin):
             pass
 
     @outlet.command("untimeout")
-    # @outlet.require_permissions("manage_roles")
-    @debug_only
+    @outlet.require_permissions("manage_roles")
     async def untimeout_cmd(self, ctx, user: Member):
         """Remove a user from timeout."""
 
