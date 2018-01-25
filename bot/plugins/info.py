@@ -22,6 +22,18 @@ class Plugin(outlet.Plugin):
                 except discord.errors.Forbidden:
                     pass
 
+    async def on_member_join(self, member):
+        if member.guild.id == 353615025589714946:  # only rsurf
+            self.log.info("{} joined RSurf. Giving surfer role".format(member))
+
+            surfer_role = discord.utils.get(member.guild.roles, name="Surfer")
+
+            if surfer_role is None:
+                self.log.error("surfer role not found")
+                raise Exception("surfer role not found")
+
+            await member.add_roles(surfer_role)
+
     # @outlet.command("dd")
     # async def dd(self, ctx, id: Number):
     #     if ctx.author.id != 231658954831298560:
