@@ -189,4 +189,4 @@ class Plugin(outlet.Plugin):
 
             msg += "{}: {} Reason: {}".format(member, seconds_to_str(time_left), timeout.reason)
 
-        await ctx.send(msg if timeouts else "No one is in timeout.")
+        return msg if timeouts else "No one is in timeout."
