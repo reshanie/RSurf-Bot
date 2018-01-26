@@ -5,10 +5,6 @@ import discord
 import outlet
 from outlet import errors, Member, RelativeTime
 
-import sys
-
-sys.path.insert(0, "bot/plugins/resources/")
-
 from functools import wraps
 
 from math import floor as floor_
@@ -214,7 +210,7 @@ class Plugin(outlet.Plugin):
 
         timeouts = self.db.query(self.Timeout).filter_by(guild_id=ctx.guild.id).all()
 
-        msg = "__**Timeouts**__\n\n"
+        msg = "__**Timeouts**__\n"
 
         for timeout in timeouts:
             member = ctx.guild.get_member(timeout.user_id)
@@ -224,6 +220,6 @@ class Plugin(outlet.Plugin):
 
             time_left = max(0, int(timeout.expires) - int(time.time()))  # can take up to 10 seconds to remove timeout
 
-            msg += "{}: {} Reason: {}".format(member, seconds_to_str(time_left), timeout.reason)
+            msg += "\n{}: {} Reason: {}".format(member, seconds_to_str(time_left), timeout.reason)
 
         return msg if timeouts else "No one is in timeout."

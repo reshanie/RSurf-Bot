@@ -3,3 +3,4 @@ sqlalchemy
 aiohttp
 pygogo
 outlet
+furl
