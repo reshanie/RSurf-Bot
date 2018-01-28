@@ -63,7 +63,7 @@ class Plugin(outlet.Plugin):
         if self.private_server_channel:
             self.log.info("found private server channel")
         else:
-            self.log.error("private esrver channel not found")
+            self.log.error("private server channel not found")
 
     @outlet.command("add-ps")
     async def add_private_server_command(self, ctx, url, *title):
@@ -103,8 +103,9 @@ class Plugin(outlet.Plugin):
             await msg.add_reaction("✅")
             await msg.add_reaction("❌")
 
-            await ctx.send("Private server added to list.")
             await ctx.message.delete()
+
+            return "Private server added to list."
 
     async def on_message_delete(self, message):
         self.log.debug("message delete")

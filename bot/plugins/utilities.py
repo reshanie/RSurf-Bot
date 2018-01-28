@@ -1,12 +1,10 @@
 import outlet
-from outlet import Member
+from outlet import errors, Member
 import discord
-
-import aiohttp
 
 
 class Plugin(outlet.Plugin):
-    __plugin__ = "Info"
+    __plugin__ = "Utilities"
 
     async def on_ready(self):
         game = discord.Game(name="RSurf Bot | $help")
@@ -33,7 +31,6 @@ class Plugin(outlet.Plugin):
                 raise Exception("surfer role not found")
 
             await member.add_roles(surfer_role)
-
 
     # @outlet.command("dd")
     # async def dd(self, ctx, id: Number):
@@ -63,3 +60,22 @@ class Plugin(outlet.Plugin):
                                                                                             r["robloxId"])
             else:
                 return "{} doesn't have a Roblox account in RoVerify's database.".format(user)
+
+    @outlet.command("invite")
+    async def invite(self, ctx):
+        """
+        Gets the permanent invite to the server.
+        """
+
+        channel = discord.utils.get(ctx.guild.channels, name="rules") \
+                  or discord.utils.get(ctx.guild.channels, name="general") \
+                  or discord.utils.get(ctx.guild.channels, name="main")
+
+        if not channel:
+            raise errors.ArgumentError("Invite channel not found.")
+
+        invite = await channel.create_invite(unique=False)
+
+        return str(invite)
+
+    
