@@ -63,9 +63,7 @@ class Plugin(outlet.Plugin):
 
     @outlet.command("invite")
     async def invite(self, ctx):
-        """
-        Gets the permanent invite to the server.
-        """
+        """Gets the permanent invite to the server."""
 
         channel = discord.utils.get(ctx.guild.channels, name="rules") \
                   or discord.utils.get(ctx.guild.channels, name="general") \
@@ -78,4 +76,24 @@ class Plugin(outlet.Plugin):
 
         return str(invite)
 
-    
+    @outlet.command("user-info")
+    async def user_info(self, ctx, *user: Member):
+        """Gets info about a discord user."""
+
+        if user:
+            member = user[0]
+        else:  # by default, use message author
+            member = ctx.author
+
+        embed = discord.Embed(color=await self.bot.my_color(ctx.guild))
+
+        embed.set_author(name=str(member), icon_url=member.avatar_url)
+
+        embed.add_field(name="Nickname", value=member.nick or member.name)
+
+        embed.add_field(name="Account Created", value=str(member.created_at))
+        embed.add_field(name="Joined "+ctx.guild.name, value=str(member.joined_at))
+
+        embed.add_field(name="Top Role", value=member.top_role.name)
+
+        await ctx.send(embed=embed)
