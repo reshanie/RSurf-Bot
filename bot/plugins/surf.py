@@ -66,8 +66,6 @@ class Plugin(outlet.Plugin):
             self.log.error("private esrver channel not found")
 
     @outlet.command("add-ps")
-    # @outlet.require_permissions("manage_roles")
-    @debug_only
     async def add_private_server_command(self, ctx, url, *title):
         """Submit a private server for Surf to the <#376555570091524096> channel."""
 
