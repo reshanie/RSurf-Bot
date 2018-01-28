@@ -21,7 +21,7 @@ def disable_in_main(func):
             await asyncio.sleep(5)
             await msg.delete()
 
-        await func(self_, ctx, *args)
+        return await func(self_, ctx, *args)
 
     return new_func
 
