@@ -54,7 +54,7 @@ def seconds_to_long_str(seconds):
     if seconds:
         time_str.append("{} seconds".format(seconds))
 
-    return " ".join(time_str)
+    return " ".join(time_str)[:-1]
 
 
 # decorators
@@ -190,16 +190,20 @@ class Plugin(outlet.Plugin):
     async def timeout_cmd(self, ctx, user: Member, length: RelativeTime, *reason):
         """Give a user timeout with an optional reason."""
 
-        reason = " ".join(reason) if reason else "No reason given."
+        reason = " ".join(reason) if reason else "No reason provided."
 
         self.log.info("{} given {} second timeout in {}".format(user, length, user.guild))
 
         await self.timeout_user(user, length, reason)
 
+        await self.mod_log.send(
+            "{} gave {} a {} timeout. Reason: `{}`".format(ctx.author.mention, user.mention,
+                                                            seconds_to_long_str(length), reason))
+
         # dm user if possible
         try:
             await user.send("You were given a {} timeout in {}. Reason: {}".format(seconds_to_long_str(length),
-                                                                                   user.guild, reason))
+                                                                                    user.guild, reason))
         except discord.errors.Forbidden:
             pass
 
@@ -211,6 +215,14 @@ class Plugin(outlet.Plugin):
         await self.remove_from_timeout(user.id, user.guild, user)
 
         await ctx.send("Removed {!s} from timeout.".format(user))
+
+        await self.mod_log.send("{} lifted {}'s timeout".format(ctx.author.mention, user.mention))
+
+        # dm user if possible
+        try:
+            await user.send("Your timeout in RSurf was lifted.")
+        except discord.errors.Forbidden:
+            pass
 
     @outlet.command("timeouts")
     async def list_timeouts(self, ctx):
@@ -236,7 +248,6 @@ class Plugin(outlet.Plugin):
         self.log.info("member was banned.")
 
         if guild.id != 353615025589714946:  # make sure its rsurf
-            self.log.info("not rsurf")
             return
 
         audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.ban).flatten()
@@ -245,8 +256,20 @@ class Plugin(outlet.Plugin):
         if audit is None:
             raise ValueError("Member ban not found in audit log.")
 
-        msg = "{0.user.mention} banned `{0.target}`. Reason: `{1}`".format(audit, audit.reason or "No reason provided.")
+        msg = "{0.user.mention} banned `{0.target}` Reason: `{1}`".format(audit, audit.reason or "No reason provided.")
 
         await self.mod_log.send(msg)
 
-    # async def on_member_unbanned(self,):
+    async def on_member_unban(self, guild, user):
+        if guild.id != 353615025589714946:  # make sure its rsurf
+            return
+
+        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.ban).flatten()
+
+        audit = discord.utils.get(audit, target=user)
+        if audit is None:
+            raise ValueError("Member ban not found in audit log.")
+
+        msg = "{0.user.mention} unbanned `{0.target}`".format(audit)
+
+        await self.mod_log.send(msg)
