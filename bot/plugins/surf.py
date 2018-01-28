@@ -12,17 +12,17 @@ def check_private_server_link(url):
     url = furl(url)
 
     if url.host not in ("roblox.com", "www.roblox.com", "web.roblox.com"):  # check if link is to roblox
-        return False
+        return None
 
     url.host = "www.roblox.com"
 
     if not str(url.path).startswith("/games/272689493/"):  # check if link is to surf game
-        return False
+        return None
 
     if "privateServerLinkCode" not in url.args:  # check if link is for a private server
-        return False
+        return None
 
-    return True
+    return str(url)
 
 
 # decorators
@@ -69,10 +69,18 @@ class Plugin(outlet.Plugin):
     async def add_private_server_command(self, ctx, url, *title):
         """Submit a private server for Surf to the <#376555570091524096> channel."""
 
-        if not check_private_server_link(url):
+        url = check_private_server_link(url)  # normalize URL
+
+        if url is None:  # wasn't a link to surf private server
             raise errors.ArgumentError("The URL needs to be a link to a private server on Surf.")
 
-        ps_id = randrange(100, 1000)
+        # check for duplicate
+
+        ps = self.db.query(self.PrivateServer).filter_by(url=url)
+        if ps.count() > 0:
+            raise errors.ArgumentError("That private server is already in the list.")
+
+        ps_id = randrange(100, 1000)  # random 3 digit server id
 
         try:
 
@@ -87,7 +95,7 @@ class Plugin(outlet.Plugin):
         else:
             private_server = self.PrivateServer(id=ps_id, url=url, message_id=msg.id)
 
-            self.db.add(private_server)
+            self.db.add(private_server)  # add to db
 
             self.log.debug("committing db")
             self.db.commit()
@@ -101,11 +109,11 @@ class Plugin(outlet.Plugin):
     async def on_message_delete(self, message):
         self.log.debug("message delete")
 
-        ps = self.db.query(self.PrivateServer).filter_by(message_id=message.id).first()
+        ps = self.db.query(self.PrivateServer).filter_by(message_id=message.id).first()  # check if message is PS
         if ps:  # private server message was deleted
             self.log.info("Private server message was deleted from list")
 
-            self.db.delete(ps)
+            self.db.delete(ps)  # remove PS from database on delete
 
             self.log.debug("comitting db")
             self.db.commit()
