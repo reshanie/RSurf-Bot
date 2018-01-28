@@ -27,6 +27,19 @@ class Timeout(Base):
     reason = Column(Text)
 
 
+class PrivateServer(Base):
+    __tablename__ = "private_servers"
+
+    id = Column(Numeric, primary_key=True)
+
+    url = Column(Text)
+
+    recommends = Column(Numeric, default=0)
+    reports = Column(Numeric, default=0)
+
+    message_id = Column(Numeric)
+
+
 # Engine
 engine = create_engine(DB_URL)
 

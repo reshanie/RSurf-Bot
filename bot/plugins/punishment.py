@@ -78,7 +78,7 @@ def debug_only(func):
 
 # noinspection PyTypeChecker
 class Plugin(outlet.Plugin):
-    __plugin__ = "Punishment"
+    __plugin__ = "Moderation"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
