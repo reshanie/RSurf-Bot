@@ -88,6 +88,14 @@ class Plugin(outlet.Plugin):
         self.db = database.Session()
         self.Timeout = database.Timeout
 
+        self.mod_log = None
+
+    async def on_ready(self):
+        self.mod_log = self.bot.get_channel(355845257881190400)
+
+        if self.mod_log is None:
+            self.log.error("mod log channel not found")
+
     async def timeout_user(self, member, seconds, reason):
         if member.bot:
             raise errors.ArgumentError("Bots can't be put in timeout.")
@@ -223,3 +231,22 @@ class Plugin(outlet.Plugin):
             msg += "\n{}: {} Reason: {}".format(member, seconds_to_str(time_left), timeout.reason)
 
         return msg if timeouts else "No one is in timeout."
+
+    async def on_member_ban(self, guild, user):
+        self.log.info("member was banned.")
+
+        if guild.id != 353615025589714946:  # make sure its rsurf
+            self.log.info("not rsurf")
+            return
+
+        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.ban).flatten()
+
+        audit = discord.utils.get(audit, target=user)
+        if audit is None:
+            raise ValueError("Member ban not found in audit log.")
+
+        msg = "{0.user.mention} banned `{0.target}`. Reason: `{1}`".format(audit, audit.reason or "No reason provided.")
+
+        await self.mod_log.send(msg)
+
+    # async def on_member_unbanned(self,):

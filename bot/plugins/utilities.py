@@ -2,6 +2,26 @@ import outlet
 from outlet import errors, Member
 import discord
 
+from functools import wraps
+
+
+# util decorators
+
+def no_punished(func):
+    if getattr(func, "is_command", False):
+        raise SyntaxError("@debug_only decorator should be placed under the @command decorator")
+
+    @wraps(func)
+    async def new_func(self_, ctx, *args):
+        if ctx.author.id != 231658954831298560:
+            raise errors.MissingPermission("This is a debug command and can only be used by reshanie#7510")
+
+        await func(self_, ctx, *args)
+
+    return new_func
+
+
+# plugin
 
 class Plugin(outlet.Plugin):
     __plugin__ = "Utilities"
@@ -31,18 +51,6 @@ class Plugin(outlet.Plugin):
                 raise Exception("surfer role not found")
 
             await member.add_roles(surfer_role)
-
-    # @outlet.command("dd")
-    # async def dd(self, ctx, id: Number):
-    #     if ctx.author.id != 231658954831298560:
-    #         return
-    #
-    #     await ctx.message.delete()
-    #
-    #     msg = await ctx.channel.get_message(id)
-    #
-    #     if msg is not None:
-    #         await msg.delete()
 
     @outlet.command("roblox")
     @outlet.cooldown(3)
@@ -92,7 +100,7 @@ class Plugin(outlet.Plugin):
         embed.add_field(name="Nickname", value=member.nick or member.name)
 
         embed.add_field(name="Account Created", value=str(member.created_at))
-        embed.add_field(name="Joined "+ctx.guild.name, value=str(member.joined_at))
+        embed.add_field(name="Joined " + ctx.guild.name, value=str(member.joined_at))
 
         embed.add_field(name="Top Role", value=member.top_role.name)
 
