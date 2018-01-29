@@ -1,3 +1,4 @@
+import asyncio
 import outlet
 from outlet import errors, String
 from furl import furl
@@ -69,7 +70,7 @@ class Plugin(outlet.Plugin):
             self.log.error("private server channel not found")
 
     @outlet.command("add-ps")
-    async def add_private_server_command(self, ctx, url, *title):
+    async def add_private_server(self, ctx, url, *title):
         """Submit a private server for Surf to the <#376555570091524096> channel."""
 
         url = check_private_server_link(url)  # normalize URL
@@ -96,7 +97,7 @@ class Plugin(outlet.Plugin):
         except Exception as e:
             self.log.error("error adding private server: {}".format(e))
         else:
-            private_server = self.PrivateServer(id=ps_id, url=url, message_id=msg.id)
+            private_server = self.PrivateServer(id=ps_id, url=url, message_id=msg.id, submitter_id=ctx.author.id)
 
             self.db.add(private_server)  # add to db
 
@@ -109,6 +110,39 @@ class Plugin(outlet.Plugin):
             await ctx.message.delete()
 
             return "Private server added to list."
+
+    @outlet.command("remove-ps")
+    async def remove_private_server(self, ctx, url: String):
+        """Remove a private server you submitted to the list by the URL."""
+
+        url = check_private_server_link(url)
+
+        if url is None:
+            return "Invalid private server link."
+
+        ps = self.db.query(self.PrivateServer).filter_by(url=url).first()
+        if ps is None:
+            return "Private server not found."
+
+        if ps.submitter_id != ctx.author.id:
+            return "You can't remove a private server that you didn't submit."
+
+        try:
+            message = await self.private_server_channel.get_message(ps.message_id)
+            if message:
+                await message.delete()
+
+            self.db.delete(ps)
+            self.db.commit()
+
+            await ctx.message.delete()
+
+            return "Removed private server from list"
+
+        except Exception as e:
+            print(e)
+            return "Command failed. Try again, and if it still doesn't work, tell reshanie#7510"
+
 
     async def on_message_delete(self, message):
         self.log.debug("message delete")

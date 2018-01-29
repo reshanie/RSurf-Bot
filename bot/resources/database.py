@@ -39,6 +39,8 @@ class PrivateServer(Base):
 
     message_id = Column(Numeric)
 
+    submitter_id = Column(Numeric)
+
 
 # Engine
 engine = create_engine(DB_URL)
