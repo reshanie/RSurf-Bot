@@ -22,6 +22,9 @@ def check_private_server_link(url):
     if "privateServerLinkCode" not in url.args:  # check if link is for a private server
         return None
 
+    if len(url.args["privateServerLinkCode"] != 32):
+        return None
+
     return str(url)
 
 
@@ -46,7 +49,7 @@ def debug_only(func):
 
 # noinspection PyTypeChecker
 class Plugin(outlet.Plugin):
-    __plugin__ = "Surf"
+    __plugin__ = "Private Servers"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
