@@ -16,7 +16,7 @@ def no_punished(func):
         if ctx.author.id != 231658954831298560:
             raise errors.MissingPermission("This is a debug command and can only be used by reshanie#7510")
 
-        await func(self_, ctx, *args)
+        return await func(self_, ctx, *args)
 
     return new_func
 
