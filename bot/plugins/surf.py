@@ -22,7 +22,7 @@ def check_private_server_link(url):
     if "privateServerLinkCode" not in url.args:  # check if link is for a private server
         return None
 
-    if len(url.args["privateServerLinkCode"] != 32):
+    if len(url.args["privateServerLinkCode"]) != 32:
         return None
 
     return str(url)
