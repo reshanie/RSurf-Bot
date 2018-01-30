@@ -8,6 +8,8 @@ from random import randrange
 
 from functools import wraps
 
+PS_PREFIX = "https://www.roblox.com/games/272689493/surf?privateServerLinkCode="
+
 
 def check_private_server_link(url):
     url = furl(url)
@@ -26,7 +28,7 @@ def check_private_server_link(url):
     if len(url.args["privateServerLinkCode"]) != 32:
         return None
 
-    return str(url)
+    return PS_PREFIX + url.args["privateServerLinkCode"]
 
 
 # decorators
@@ -142,7 +144,6 @@ class Plugin(outlet.Plugin):
         except Exception as e:
             print(e)
             return "Command failed. Try again, and if it still doesn't work, tell reshanie#7510"
-
 
     async def on_message_delete(self, message):
         self.log.debug("message delete")
