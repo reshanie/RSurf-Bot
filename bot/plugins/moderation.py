@@ -1,15 +1,18 @@
+import asyncio
+import re
 import time
 from datetime import timedelta
+from functools import wraps
+from math import floor as floor_
 
 import discord
 import outlet
 from outlet import errors, Member, RelativeTime
 
-from functools import wraps
-
-from math import floor as floor_
-
 RSURF_PUNISHED = 353641063199801347
+
+INVITE = re.compile(r"(discord(\.gg|app\.com\/invite)\/[\w]{7}|discord\.me\/[\w]+)")
+SELF_PROMOTION = 386618891012669441
 
 
 # utilities
@@ -198,12 +201,12 @@ class Plugin(outlet.Plugin):
 
         await self.mod_log.send(
             "{} gave {} a {} timeout. Reason: `{}`".format(ctx.author.mention, user.mention,
-                                                            seconds_to_long_str(length), reason))
+                                                           seconds_to_long_str(length), reason))
 
         # dm user if possible
         try:
             await user.send("You were given a {} timeout in {}. Reason: {}".format(seconds_to_long_str(length),
-                                                                                    user.guild, reason))
+                                                                                   user.guild, reason))
         except discord.errors.Forbidden:
             pass
 
@@ -273,3 +276,16 @@ class Plugin(outlet.Plugin):
         msg = "{0.user.mention} unbanned `{0.target}`".format(audit)
 
         await self.mod_log.send(msg)
+
+    @outlet.events.on_message(channel="general")
+    async def delete_invites(self, message):
+        if message.author == self.bot.user:
+            return
+
+        if INVITE.search(message.content) is not None:
+            await message.delete()
+
+            warning = await message.channel.send("Invites belong in <#{}>".format(SELF_PROMOTION))
+
+            await asyncio.sleep(5)
+            await warning.delete()
