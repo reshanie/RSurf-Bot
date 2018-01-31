@@ -4,6 +4,8 @@ import discord
 
 from functools import wraps
 
+import time
+
 
 # util decorators
 
@@ -105,3 +107,20 @@ class Plugin(outlet.Plugin):
         embed.add_field(name="Top Role", value=member.top_role.name)
 
         await ctx.send(embed=embed)
+
+    @outlet.command("ping")
+    async def ping(self, ctx):
+        """Get ping time."""
+        start = time.time()
+        msg = await ctx.channel.send("Pong!")
+        send_time = time.time() - start
+
+        latency = self.bot.latency
+
+        embed = discord.Embed(color=await self.bot.my_color(ctx.guild))
+        embed.set_author(name="🏓 Pong!")
+
+        embed.add_field(name="API", value="{0:.01f}ms".format(send_time*1000))
+        embed.add_field(name="Latency", value="{0:.01f}ms".format(latency*1000))
+
+        await msg.edit(content="", embed=embed)
