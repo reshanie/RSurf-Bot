@@ -99,23 +99,6 @@ class Plugin(outlet.Plugin):
 
         await ctx.send(embed=embed)
 
-    @outlet.command("ping")
-    async def ping(self, ctx):
-        """Get ping time."""
-        start = time.time()
-        msg = await ctx.channel.send("Pong!")
-        send_time = time.time() - start
-
-        latency = self.bot.latency
-
-        embed = discord.Embed(color=await self.bot.my_color(ctx.guild))
-        embed.set_author(name="🏓 Pong!")
-
-        embed.add_field(name="API", value="{0:.01f}ms".format(send_time*1000))
-        embed.add_field(name="Latency", value="{0:.01f}ms".format(latency*1000))
-
-        await msg.edit(content="", embed=embed)
-
     @outlet.events.on_message()
     async def report_event(self, message):
         if not os.environ.get("RSURF_DEV", False):
