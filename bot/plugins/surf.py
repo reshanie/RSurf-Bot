@@ -147,14 +147,13 @@ class Plugin(outlet.Plugin):
             return "Command failed. Try again, and if it still doesn't work, tell reshanie#7510"
 
     async def on_message_delete(self, message):
-        if not os.environ.get("RSURF_DEV", False):
-            self.log.debug("message delete")
+        self.log.debug("message delete")
 
-            ps = self.db.query(self.PrivateServer).filter_by(message_id=message.id).first()  # check if message is PS
-            if ps:  # private server message was deleted
-                self.log.info("Private server message was deleted from list")
+        ps = self.db.query(self.PrivateServer).filter_by(message_id=message.id).first()  # check if message is PS
+        if ps:  # private server message was deleted
+            self.log.info("Private server message was deleted from list")
 
-                self.db.delete(ps)  # remove PS from database on delete
+            self.db.delete(ps)  # remove PS from database on delete
 
-                self.log.debug("comitting db")
-                self.db.commit()
+            self.log.debug("comitting db")
+            self.db.commit()

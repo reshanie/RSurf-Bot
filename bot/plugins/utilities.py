@@ -1,3 +1,4 @@
+import os
 import outlet
 from outlet import errors, Member
 import discord
@@ -129,11 +130,12 @@ class Plugin(outlet.Plugin):
 
     @outlet.events.on_message()
     async def report_event(self, message):
-        self.log.debug("reporting message to keen")
+        if not os.environ.get("RSURF_DEV", False):
+            self.log.debug("reporting message to keen")
 
-        keen.add_event("messages", {
-            "id": message.id,
-            "author": str(message.author),
-            "channel": message.channel.name,
-            "attachments": len(message.attachments)
-        })
+            keen.add_event("messages", {
+                "id": message.id,
+                "author": str(message.author),
+                "channel": message.channel.name,
+                "attachments": len(message.attachments)
+            })
