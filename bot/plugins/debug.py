@@ -53,6 +53,9 @@ class Plugin(outlet.Plugin):
         expression = expression[expression.find(" "):]
 
         try:
-            return repr(eval(expression))
+            result = repr(eval(expression))
+            result = result.replace("```", "")
+
+            return "```{}```".format(result)
         except Exception as e:
-            return "{0.__class__.__name__}: {0!s}".format(e)
+            return "{0.__class__.__name__}: ```{0!s}```".format(e)
