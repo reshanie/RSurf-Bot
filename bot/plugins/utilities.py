@@ -2,6 +2,8 @@ import outlet
 from outlet import errors, Member
 import discord
 
+import keen
+
 from functools import wraps
 
 import time
@@ -124,3 +126,14 @@ class Plugin(outlet.Plugin):
         embed.add_field(name="Latency", value="{0:.01f}ms".format(latency*1000))
 
         await msg.edit(content="", embed=embed)
+
+    @outlet.events.on_message()
+    async def report_event(self, message):
+        self.log.debug("reporting message to keen")
+
+        keen.add_event("messages", {
+            "id": message.id,
+            "author": str(message.author),
+            "channel": message.channel.name,
+            "attachments": len(message.attachments)
+        })
