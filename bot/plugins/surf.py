@@ -107,9 +107,6 @@ class Plugin(outlet.Plugin):
             self.log.debug("committing db")
             self.db.commit()
 
-            await msg.add_reaction("✅")
-            await msg.add_reaction("❌")
-
             await ctx.message.delete()
 
             return "Private server added to list."
