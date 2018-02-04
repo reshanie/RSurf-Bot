@@ -248,10 +248,14 @@ class Plugin(outlet.Plugin):
         return msg if timeouts else "No one is in timeout."
 
     async def on_member_ban(self, guild, user):
+        """log member bans"""
+
         self.log.info("member was banned.")
 
         if guild.id != 353615025589714946:  # make sure its rsurf
             return
+
+        await asyncio.sleep(1)  # allow time for audit log to update (just in case)
 
         audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.ban).flatten()
 
@@ -264,16 +268,42 @@ class Plugin(outlet.Plugin):
         await self.mod_log.send(msg)
 
     async def on_member_unban(self, guild, user):
+        """log member unbans"""
+
+        self.log.info("member was unbanned.")
+
         if guild.id != 353615025589714946:  # make sure its rsurf
             return
 
-        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.ban).flatten()
+        await asyncio.sleep(1)  # allow time for audit log to update (just in case)
+
+        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.unban).flatten()
 
         audit = discord.utils.get(audit, target=user)
         if audit is None:
             raise ValueError("Member ban not found in audit log.")
 
         msg = "{0.user.mention} unbanned `{0.target}`".format(audit)
+
+        await self.mod_log.send(msg)
+
+    async def on_member_remove(self, member):
+        """check if member was kicked and if so, log"""
+
+        guild = member.guild
+
+        if guild.id != 353615025589714946:  # make sure its rsurf
+            return
+
+        await asyncio.sleep(1)
+
+        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.kick).flatten()
+
+        audit = discord.utils.get(audit, target=member)
+        if audit is None:
+            return
+
+        msg = "{0.user.mention} kicked `{0.target}` Reason: `{1}`".format(audit, audit.reason or "None provided")
 
         await self.mod_log.send(msg)
 
