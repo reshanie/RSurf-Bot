@@ -267,6 +267,9 @@ class Plugin(outlet.Plugin):
 
         await self.mod_log.send(msg)
 
+        if audit.reason is None:
+            await self.mod_log.send("{} please give reason when you ban!".format(audit.user.mention))
+
     async def on_member_unban(self, guild, user):
         """log member unbans"""
 
@@ -306,6 +309,9 @@ class Plugin(outlet.Plugin):
         msg = "{0.user.mention} kicked `{0.target}` Reason: `{1}`".format(audit, audit.reason or "None provided")
 
         await self.mod_log.send(msg)
+
+        if audit.reason is None:
+            await self.mod_log.send("{} please give reason when you kick!".format(audit.user.mention))
 
     @outlet.events.on_message(channel="general")
     async def delete_invites(self, message):
