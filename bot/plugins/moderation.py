@@ -184,7 +184,7 @@ class Plugin(outlet.Plugin):
                 self.log.info("timeout expired for {!s} in {!s}".format(member, guild))
 
                 try:
-                    self.create_task(self.remove_from_timeout(member.id, guild, member=member))
+                    self.create_task(self.remove_from_timeout(timeout.user_id, guild, member=member))
                 except errors.CommandError:
                     pass
 
