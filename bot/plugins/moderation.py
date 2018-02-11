@@ -193,7 +193,9 @@ class Plugin(outlet.Plugin):
     async def timeout_cmd(self, ctx, user: Member, length: RelativeTime, *reason):
         """Give a user timeout with an optional reason."""
 
-        reason = " ".join(reason) if reason else "No reason provided."
+        reason = " ".join(
+            ctx.message.clean_content.split(" ")[-len(reason):]  # get message clean content and find reason
+        )
 
         self.log.info("{} given {} second timeout in {}".format(user, length, user.guild))
 
@@ -221,12 +223,6 @@ class Plugin(outlet.Plugin):
 
         await self.mod_log.send("{} lifted {}'s timeout".format(ctx.author.mention, user.mention))
 
-        # dm user if possible
-        try:
-            await user.send("Your timeout in RSurf was lifted.")
-        except discord.errors.Forbidden:
-            pass
-
     @outlet.command("timeouts")
     async def list_timeouts(self, ctx):
         """List active timeouts for the guild"""
@@ -243,7 +239,7 @@ class Plugin(outlet.Plugin):
 
             time_left = max(0, int(timeout.expires) - int(time.time()))  # can take up to 10 seconds to remove timeout
 
-            msg += "\n{}: {} Reason: {}".format(member, seconds_to_str(time_left), timeout.reason)
+            msg += "\n{}: {} Reason: `{}`".format(member, seconds_to_str(time_left), timeout.reason)
 
         return msg if timeouts else "No one is in timeout."
 
