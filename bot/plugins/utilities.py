@@ -66,16 +66,10 @@ class Plugin(outlet.Plugin):
     async def invite(self, ctx):
         """Gets the permanent invite to the server."""
 
-        channel = discord.utils.get(ctx.guild.channels, name="rules") \
-                  or discord.utils.get(ctx.guild.channels, name="general") \
-                  or discord.utils.get(ctx.guild.channels, name="main")
+        if ctx.guild.id != 353615025589714946:
+            return  # rsurf only
 
-        if not channel:
-            raise errors.ArgumentError("Invite channel not found.")
-
-        invite = await channel.create_invite(unique=False)
-
-        return str(invite)
+        return "http://discord.gg/uAeRSx7"
 
     @outlet.command("user-info")
     async def user_info(self, ctx, *user: Member):
