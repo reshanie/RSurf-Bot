@@ -35,14 +35,14 @@ class Plugin(outlet.Plugin):
     __plugin__ = "Fun"
 
     @outlet.command("roll")
-    @disable_in_main
+    # @disable_in_main
     async def roll(self, ctx, *text):
         """Rolls a number from 1 - 100."""
 
         return str(random.randint(1, 100))
 
     @outlet.command("8ball")
-    @disable_in_main
+    # @disable_in_main
     async def magic_8ball(self, ctx, *text):
         """Let the 8ball decide your fate."""
 
@@ -54,7 +54,7 @@ class Plugin(outlet.Plugin):
         ])
 
     @outlet.command("coinflip")
-    @disable_in_main
+    # @disable_in_main
     async def coinflip(self, ctx):
         """Flip a coin!"""
 
