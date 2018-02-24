@@ -253,7 +253,7 @@ class Plugin(outlet.Plugin):
 
         await asyncio.sleep(1)  # allow time for audit log to update (just in case)
 
-        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.ban).flatten()
+        audit = await guild.audit_logs(limit=3, action=discord.AuditLogAction.ban).flatten()
 
         audit = discord.utils.get(audit, target=user)
         if audit is None:
@@ -276,7 +276,7 @@ class Plugin(outlet.Plugin):
 
         await asyncio.sleep(1)  # allow time for audit log to update (just in case)
 
-        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.unban).flatten()
+        audit = await guild.audit_logs(limit=3, action=discord.AuditLogAction.unban).flatten()
 
         audit = discord.utils.get(audit, target=user)
         if audit is None:
@@ -296,7 +296,7 @@ class Plugin(outlet.Plugin):
 
         await asyncio.sleep(1)
 
-        audit = await guild.audit_logs(limit=10, action=discord.AuditLogAction.kick).flatten()
+        audit = await guild.audit_logs(limit=3, action=discord.AuditLogAction.kick).flatten()
 
         audit = discord.utils.get(audit, target=member)
         if audit is None:
