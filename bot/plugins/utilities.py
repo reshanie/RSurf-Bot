@@ -93,14 +93,14 @@ class Plugin(outlet.Plugin):
 
         await ctx.send(embed=embed)
 
-    @outlet.events.on_message()
-    async def report_event(self, message):
-        if not os.environ.get("RSURF_DEV", False):
-            self.log.debug("reporting message to keen")
-
-            keen.add_event("messages", {
-                "id": message.id,
-                "author": str(message.author),
-                "channel": message.channel.name,
-                "attachments": len(message.attachments)
-            })
+    # @outlet.events.on_message()
+    # async def report_event(self, message):
+    #     if not os.environ.get("RSURF_DEV", False):
+    #         self.log.debug("reporting message to keen")
+    #
+    #         keen.add_event("messages", {
+    #             "id": message.id,
+    #             "author": str(message.author),
+    #             "channel": message.channel.name,
+    #             "attachments": len(message.attachments)
+    #         })
