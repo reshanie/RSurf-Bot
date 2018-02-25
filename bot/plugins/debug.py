@@ -1,5 +1,7 @@
 import time
+from datetime import timedelta
 from functools import wraps
+import asyncio
 
 import discord
 import outlet
@@ -20,13 +22,19 @@ def debug_only(func):
     return new_func
 
 
-# util decorators
+# util
+
+def tasks():
+    return len([task for task in asyncio.Task.all_tasks() if not task.done()])
 
 
 # plugin
 
 class Plugin(outlet.Plugin):
     __plugin__ = "Debug"
+
+    async def on_ready(self):
+        self.start_time = time.time()
 
     @outlet.command("ping")
     async def ping(self, ctx):
@@ -59,3 +67,14 @@ class Plugin(outlet.Plugin):
             return "```{}```".format(result)
         except Exception as e:
             return "{0.__class__.__name__}: ```{0!s}```".format(e)
+
+    @outlet.command("status", "uptime")
+    async def get_status(self, ctx):
+        uptime = timedelta(0, int(time.time() - self.start_time))
+
+        embed = discord.Embed(color=await self.bot.my_color(ctx.guild))
+        embed.add_field(name="Uptime", value=str(uptime))
+
+        embed.add_field(name="Running Tasks", value=str(tasks()))
+
+        await ctx.send(embed=embed)
