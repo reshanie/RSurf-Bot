@@ -1,9 +1,10 @@
 import asyncio
 import re
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import wraps
 from math import floor as floor_
+from random import randrange
 
 import discord
 import outlet
@@ -11,11 +12,15 @@ from outlet import errors, Member, RelativeTime
 
 RSURF_PUNISHED = 353641063199801347
 
-INVITE = re.compile(r"(discord(\.gg|app\.com\/invite)\/[\w]{7}|discord\.me\/[\w]+)")
+INVITE = re.compile(r"(discord(\.gg|app\.com/invite)/\w+|discord\.me/\w+)")
 SELF_PROMOTION = 386618891012669441
 
 
 # utilities
+
+def snowflake():
+    return (int(time.time()) << 3) | randrange(255)
+
 
 def get_role_string(member):
     return "|".join(str(role.id) for role in member.roles)
@@ -90,6 +95,7 @@ class Plugin(outlet.Plugin):
 
         self.db = database.Session()
         self.Timeout = database.Timeout
+        self.TimeoutLog = database.TimeoutLog
 
         self.mod_log = None
 
@@ -120,6 +126,12 @@ class Plugin(outlet.Plugin):
         timeout = self.Timeout(user_id=member.id, guild_id=member.guild.id, expires=expires, roles=roles,
                                reason=reason or "None given.")
 
+        timeout_log = self.TimeoutLog(id=snowflake(),
+                                      user_id=member.id,
+                                      given_at=datetime.utcnow(),
+                                      length=timedelta(0, seconds),
+                                      reason=reason)
+
         try:
             # replace roles
             await member.edit(roles=[punished_role], reason="{} second timeout. Reason: {}".format(seconds, reason))
@@ -127,6 +139,7 @@ class Plugin(outlet.Plugin):
             raise errors.CommandError("Make sure I have the permissions to take roles from {!s}".format(member))
         else:
             self.db.add(timeout)
+            self.db.add(timeout_log)
 
             self.log.debug("committing db")
             self.db.commit()
@@ -219,6 +232,13 @@ class Plugin(outlet.Plugin):
 
         await self.remove_from_timeout(user.id, user.guild, user)
 
+        timeout = self.db.query(self.TimeoutLog).filter_by(user_id=user.id).order_by(self.TimeoutLog.given_at)[-1]
+
+        self.db.delete(timeout)
+
+        self.log.debug("committing db")
+        self.db.commit()
+
         await ctx.send("Removed {!s} from timeout.".format(user))
 
         await self.mod_log.send("{} lifted {}'s timeout".format(ctx.author.mention, user.mention))
@@ -227,7 +247,7 @@ class Plugin(outlet.Plugin):
     async def list_timeouts(self, ctx):
         """List active timeouts for the guild"""
 
-        timeouts = self.db.query(self.Timeout).filter_by(guild_id=ctx.guild.id).all()
+        timeouts = self.db.query(self.Timeout).filter_by(guild_id=ctx.guild.id)
 
         msg = "__**Timeouts**__\n"
 
@@ -308,6 +328,45 @@ class Plugin(outlet.Plugin):
 
         if audit.reason is None:
             await self.mod_log.send("{} please give reason when you kick!".format(audit.user.mention))
+
+    @outlet.command("timeout-log")
+    async def timeout_log(self, ctx, user: Member):
+        """Shows a list of every timeout a user has received."""
+
+        timeouts = self.db.query(self.TimeoutLog).filter_by(user_id=user.id).order_by(self.TimeoutLog.given_at).all()
+
+        if len(timeouts) == 0:
+            return "{} has never been timed out.".format(user)
+
+        embed = discord.Embed(color=await self.bot.my_color(ctx.guild))
+        embed.set_author(name=str(user), icon_url=user.avatar_url)
+
+        for timeout in timeouts:
+            embed.add_field(name="**{}** on {}".format(timeout.length, timeout.given_at.date()),
+                            value=timeout.reason,
+                            inline=False)
+
+        embed.set_footer(text="Requested by {}".format(ctx.author))
+
+        await ctx.send(embed=embed)
+
+    @outlet.command("clear-timeout-log")
+    @outlet.require_permissions("manage_roles")
+    async def clear_timeout_log(self, ctx, user: Member):
+        """Clears a user's timeout log."""
+
+        try:
+            self.db.query(self.TimeoutLog).filter_by(user_id=user.id).delete()
+
+            self.log.debug("committing db")
+            self.db.commit()
+
+            await self.mod_log.send("{} cleared {}'s timeout log.".format(ctx.author.mention, user.mention))
+
+            return "{}'s timeout log was successfully cleared!".format(user)
+        except Exception as e:
+            self.db.rollback()
+            raise errors.CommandError("Failed to clear {}'s timeout log. ```{}```".format(user, str(e)))
 
     @outlet.events.on_message(channel="general")
     async def delete_invites(self, message):

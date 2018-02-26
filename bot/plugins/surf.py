@@ -1,15 +1,17 @@
-import asyncio
-import outlet
-from outlet import errors, String
-from furl import furl
-import discord
-import os
-
+import time
+from functools import wraps
 from random import randrange
 
-from functools import wraps
+import discord
+import outlet
+from furl import furl
+from outlet import errors, String
 
 PS_PREFIX = "https://www.roblox.com/games/272689493/surf?privateServerLinkCode="
+
+
+def snowflake():
+    return (int(time.time()) << 3) | randrange(255)
 
 
 def check_private_server_link(url):
@@ -87,7 +89,7 @@ class Plugin(outlet.Plugin):
         if ps.count() > 0:
             raise errors.ArgumentError("That private server is already in the list.")
 
-        ps_id = randrange(100, 1000)  # random 3 digit server id
+        ps_id = snowflake()
 
         try:
 

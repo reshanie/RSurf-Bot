@@ -93,6 +93,15 @@ class Plugin(outlet.Plugin):
 
         await ctx.send(embed=embed)
 
+    @outlet.command("embed-test")
+    async def embed_test(self, ctx):
+        embed = discord.Embed()
+
+        for i in range(3):
+            embed.add_field(name="h", value="h"*1500)
+
+        await ctx.send(embed=embed)
+
     # @outlet.events.on_message()
     # async def report_event(self, message):
     #     if not os.environ.get("RSURF_DEV", False):
