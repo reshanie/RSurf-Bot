@@ -5,3 +5,4 @@ pygogo
 outlet
 furl
 keen
+psutil

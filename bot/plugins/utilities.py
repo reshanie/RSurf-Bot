@@ -69,7 +69,7 @@ class Plugin(outlet.Plugin):
         if ctx.guild.id != 353615025589714946:
             return  # rsurf only
 
-        return "http://discord.gg/uAeRSx7"
+        return "http://discord.gg/th9DUhC"
 
     @outlet.command("user-info")
     async def user_info(self, ctx, *user: Member):

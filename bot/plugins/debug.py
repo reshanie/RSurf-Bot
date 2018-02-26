@@ -70,6 +70,7 @@ class Plugin(outlet.Plugin):
 
     @outlet.command("status", "uptime")
     async def get_status(self, ctx):
+        """Gets status of bot, including information such as uptime and number of tasks running."""
         uptime = timedelta(0, int(time.time() - self.start_time))
 
         embed = discord.Embed(color=await self.bot.my_color(ctx.guild))
