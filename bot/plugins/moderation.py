@@ -243,26 +243,6 @@ class Plugin(outlet.Plugin):
 
         await self.mod_log.send("{} lifted {}'s timeout".format(ctx.author.mention, user.mention))
 
-    @outlet.command("timeouts")
-    async def list_timeouts(self, ctx):
-        """List active timeouts for the guild"""
-
-        timeouts = self.db.query(self.Timeout).filter_by(guild_id=ctx.guild.id)
-
-        msg = "__**Timeouts**__\n"
-
-        for timeout in timeouts:
-            member = ctx.guild.get_member(timeout.user_id)
-
-            if member is None:
-                continue
-
-            time_left = max(0, int(timeout.expires) - int(time.time()))  # can take up to 10 seconds to remove timeout
-
-            msg += "\n{}: {} Reason: `{}`".format(member, seconds_to_str(time_left), timeout.reason)
-
-        return msg if timeouts else "No one is in timeout."
-
     async def on_member_ban(self, guild, user):
         """log member bans"""
 
@@ -347,6 +327,33 @@ class Plugin(outlet.Plugin):
                             inline=False)
 
         embed.set_footer(text="Requested by {}".format(ctx.author))
+
+        await ctx.send(embed=embed)
+
+    @outlet.command("timeouts")
+    async def list_timeouts(self, ctx):
+        """List active timeouts for the guild"""
+
+        timeouts = self.db.query(self.Timeout).filter_by(guild_id=ctx.guild.id)
+
+        embed = discord.Embed(title="Timeouts", color=await self.bot.my_color(ctx.guild))
+
+        for timeout in timeouts:
+            member = ctx.guild.get_member(timeout.user_id)
+
+            if member is None:
+                continue
+
+            time_left = max(0, int(timeout.expires) - int(time.time()))  # can take up to 10 seconds to remove timeout
+
+            embed.add_field(name=member, value="Reason: `{}`\nTime Left: `{}`".format(timeout.reason,
+                                                                                      timedelta(0, time_left)),
+                            inline=False)
+
+        embed.set_footer(text="Requested by {}".format(ctx.author))
+
+        if not timeouts:
+            return "No one is in timeout."
 
         await ctx.send(embed=embed)
 
