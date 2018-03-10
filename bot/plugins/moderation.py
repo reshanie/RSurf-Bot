@@ -101,7 +101,7 @@ class Plugin(outlet.Plugin):
 
     def timeout_embed(self, moderator, user, reason, length, timestamp):
         embed = discord.Embed(title="Timeout",
-                              description=seconds_to_long_str(int(length)),
+                              description=str(timedelta(0, length)),
                               color=discord.Color.orange(),
                               timestamp=timestamp)
 
@@ -425,13 +425,3 @@ class Plugin(outlet.Plugin):
 
             await asyncio.sleep(5)
             await warning.delete()
-
-    @outlet.command("clear-mod-log")
-    async def clear_ml(self, ctx):
-        self.log.debug("clearing mod log")
-        async for msg in self.mod_log.history(limit=None, before=datetime(2018, 2, 27)):
-            try:
-                print(msg.created_at)
-                await msg.delete()
-            except:
-                continue
