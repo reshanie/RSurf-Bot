@@ -116,7 +116,7 @@ class Plugin(outlet.Plugin):
         embed = discord.Embed(title=title, color=discord.Color.green(), timestamp=timestamp)
 
         embed.add_field(name="Moderator", value=moderator.mention)
-        embed.add_field(name="User", value=user.mention)
+        embed.add_field(name="User", value=str(user))
 
         return embed
 
@@ -126,7 +126,7 @@ class Plugin(outlet.Plugin):
                               timestamp=timestamp)
 
         embed.add_field(name="Moderator", value=moderator.mention)
-        embed.add_field(name="User", value=user.mention)
+        embed.add_field(name="User", value=str(user))
 
         embed.add_field(name="Reason", value=reason, inline=False)
 
@@ -425,3 +425,13 @@ class Plugin(outlet.Plugin):
 
             await asyncio.sleep(5)
             await warning.delete()
+
+    @outlet.command("clear-mod-log")
+    async def clear_ml(self, ctx):
+        self.log.debug("clearing mod log")
+        async for msg in self.mod_log.history(limit=None, before=datetime(2018, 2, 27)):
+            try:
+                print(msg.created_at)
+                await msg.delete()
+            except:
+                continue
