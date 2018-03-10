@@ -99,6 +99,41 @@ class Plugin(outlet.Plugin):
 
         self.mod_log = None
 
+    def timeout_embed(self, moderator, user, reason, length, timestamp):
+        embed = discord.Embed(title="Timeout",
+                              description=seconds_to_long_str(int(length)),
+                              color=discord.Color.orange(),
+                              timestamp=timestamp)
+
+        embed.add_field(name="Moderator", value=moderator.mention)
+        embed.add_field(name="User", value=user.mention)
+
+        embed.add_field(name="Reason", value=reason, inline=False)
+
+        return embed
+
+    def untimeout_or_unban_embed(self, title, moderator, user, timestamp):
+        embed = discord.Embed(title=title, color=discord.Color.green(), timestamp=timestamp)
+
+        embed.add_field(name="Moderator", value=moderator.mention)
+        embed.add_field(name="User", value=user.mention)
+
+        return embed
+
+    def ban_or_kick_embed(self, title, moderator, user, reason, timestamp):
+        embed = discord.Embed(title=title,
+                              color=discord.Color.red(),
+                              timestamp=timestamp)
+
+        embed.add_field(name="Moderator", value=moderator.mention)
+        embed.add_field(name="User", value=user.mention)
+
+        embed.add_field(name="Reason", value=reason, inline=False)
+
+        return embed
+
+    # --- #
+
     async def on_ready(self):
         self.mod_log = self.bot.get_channel(355845257881190400)
 
@@ -214,14 +249,13 @@ class Plugin(outlet.Plugin):
 
         await self.timeout_user(user, length, reason)
 
-        await self.mod_log.send(
-            "{} gave {} a {} timeout. Reason: `{}`".format(ctx.author.mention, user.mention,
-                                                           seconds_to_long_str(length), reason))
+        embed = self.timeout_embed(ctx.author, user, reason, length, datetime.utcnow())
+
+        await self.mod_log.send(embed=embed)
 
         # dm user if possible
         try:
-            await user.send("You were given a {} timeout in {}. Reason: {}".format(seconds_to_long_str(length),
-                                                                                   user.guild, reason))
+            await user.send(embed=embed)
         except discord.errors.Forbidden:
             pass
 
@@ -241,7 +275,9 @@ class Plugin(outlet.Plugin):
 
         await ctx.send("Removed {!s} from timeout.".format(user))
 
-        await self.mod_log.send("{} lifted {}'s timeout".format(ctx.author.mention, user.mention))
+        embed = self.untimeout_or_unban_embed("Untimeout", ctx.author, user, datetime.utcnow())
+
+        await self.mod_log.send(embed=embed)
 
     async def on_member_ban(self, guild, user):
         """log member bans"""
@@ -259,9 +295,9 @@ class Plugin(outlet.Plugin):
         if audit is None:
             raise ValueError("Member ban not found in audit log.")
 
-        msg = "{0.user.mention} banned `{0.target}` Reason: `{1}`".format(audit, audit.reason or "No reason provided.")
+        embed = self.ban_or_kick_embed("Ban", audit.user, user, audit.reason, datetime.utcnow())
 
-        await self.mod_log.send(msg)
+        await self.mod_log.send(embed=embed)
 
         if audit.reason is None:
             await self.mod_log.send("{} please give reason when you ban!".format(audit.user.mention))
@@ -282,9 +318,9 @@ class Plugin(outlet.Plugin):
         if audit is None:
             raise ValueError("Member ban not found in audit log.")
 
-        msg = "{0.user.mention} unbanned `{0.target}`".format(audit)
+        embed = self.untimeout_or_unban_embed("Unban", audit.user, user, datetime.utcnow())
 
-        await self.mod_log.send(msg)
+        await self.mod_log.send(embed=embed)
 
     async def on_member_remove(self, member):
         """check if member was kicked and if so, log"""
@@ -302,9 +338,9 @@ class Plugin(outlet.Plugin):
         if audit is None:
             return
 
-        msg = "{0.user.mention} kicked `{0.target}` Reason: `{1}`".format(audit, audit.reason or "None provided")
+        embed = self.ban_or_kick_embed("Kick", audit.user, member, audit.reason, datetime.utcnow())
 
-        await self.mod_log.send(msg)
+        await self.mod_log.send(embed=embed)
 
         if audit.reason is None:
             await self.mod_log.send("{} please give reason when you kick!".format(audit.user.mention))
@@ -313,7 +349,8 @@ class Plugin(outlet.Plugin):
     async def timeout_log(self, ctx, user: Member):
         """Shows a list of every timeout a user has received."""
 
-        timeouts = self.db.query(self.TimeoutLog).filter_by(user_id=user.id).order_by(self.TimeoutLog.given_at).all()
+        timeouts = self.db.query(self.TimeoutLog).filter_by(user_id=user.id).order_by(
+            self.TimeoutLog.given_at).all()
 
         if len(timeouts) == 0:
             return "{} has never been timed out.".format(user)
@@ -344,7 +381,8 @@ class Plugin(outlet.Plugin):
             if member is None:
                 continue
 
-            time_left = max(0, int(timeout.expires) - int(time.time()))  # can take up to 10 seconds to remove timeout
+            time_left = max(0,
+                            int(timeout.expires) - int(time.time()))  # can take up to 10 seconds to remove timeout
 
             embed.add_field(name=member, value="Reason: `{}`\nTime Left: `{}`".format(timeout.reason,
                                                                                       timedelta(0, time_left)),
