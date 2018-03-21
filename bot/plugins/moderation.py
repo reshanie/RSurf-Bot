@@ -82,6 +82,26 @@ def debug_only(func):
     return new_func
 
 
+# mod log messages
+
+BAN = "{mod} banned {user}. Reason: `{reason}`"
+KICK = "{mod} kicked {user}. Reason: `{reason}`"
+
+TIMEOUT = "{mod} punished {user}. Length: `{length}` Reason: `{reason}`"
+
+UNTIMEOUT = "{mod} unpunished {user}"
+UNBAN = "{mod} unbanned {user}"
+
+
+def format_msg(content, **kwargs):
+    content
+
+    for key, value in kwargs.items():
+        content = content.replace("{" + key + "}", str(value))
+
+    return content
+
+
 # plugin
 
 # noinspection PyTypeChecker
@@ -98,39 +118,6 @@ class Plugin(outlet.Plugin):
         self.TimeoutLog = database.TimeoutLog
 
         self.mod_log = None
-
-    def timeout_embed(self, moderator, user, reason, length, timestamp):
-        embed = discord.Embed(title="Timeout",
-                              description=str(timedelta(0, length)),
-                              color=discord.Color.orange(),
-                              timestamp=timestamp)
-
-        embed.add_field(name="Moderator", value=moderator.mention)
-        embed.add_field(name="User", value=user.mention)
-
-        embed.add_field(name="Reason", value=reason, inline=False)
-
-        return embed
-
-    def untimeout_or_unban_embed(self, title, moderator, user, timestamp):
-        embed = discord.Embed(title=title, color=discord.Color.green(), timestamp=timestamp)
-
-        embed.add_field(name="Moderator", value=moderator.mention)
-        embed.add_field(name="User", value=str(user))
-
-        return embed
-
-    def ban_or_kick_embed(self, title, moderator, user, reason, timestamp):
-        embed = discord.Embed(title=title,
-                              color=discord.Color.red(),
-                              timestamp=timestamp)
-
-        embed.add_field(name="Moderator", value=moderator.mention)
-        embed.add_field(name="User", value=str(user))
-
-        embed.add_field(name="Reason", value=reason, inline=False)
-
-        return embed
 
     # --- #
 
@@ -249,15 +236,11 @@ class Plugin(outlet.Plugin):
 
         await self.timeout_user(user, length, reason)
 
-        embed = self.timeout_embed(ctx.author, user, reason, length, datetime.utcnow())
-
-        await self.mod_log.send(embed=embed)
-
-        # dm user if possible
-        try:
-            await user.send(embed=embed)
-        except discord.errors.Forbidden:
-            pass
+        await self.mod_log.send(format_msg(TIMEOUT,
+                                           mod=ctx.author.mention,
+                                           user=user.mention,
+                                           reason=reason,
+                                           length=timedelta(0, length)))
 
     @outlet.command("untimeout")
     @outlet.require_permissions("manage_roles")
@@ -275,9 +258,9 @@ class Plugin(outlet.Plugin):
 
         await ctx.send("Removed {!s} from timeout.".format(user))
 
-        embed = self.untimeout_or_unban_embed("Untimeout", ctx.author, user, datetime.utcnow())
-
-        await self.mod_log.send(embed=embed)
+        await self.mod_log.send(format_msg(UNTIMEOUT,
+                                           mod=ctx.author.mention,
+                                           user=user.mention))
 
     async def on_member_ban(self, guild, user):
         """log member bans"""
@@ -295,9 +278,10 @@ class Plugin(outlet.Plugin):
         if audit is None:
             raise ValueError("Member ban not found in audit log.")
 
-        embed = self.ban_or_kick_embed("Ban", audit.user, user, audit.reason, datetime.utcnow())
-
-        await self.mod_log.send(embed=embed)
+        await self.mod_log.send(format_msg(BAN,
+                                           mod=audit.user.mention,
+                                           user=user,
+                                           reason=audit.reason or "None provided."))
 
         if audit.reason is None:
             await self.mod_log.send("{} please give reason when you ban!".format(audit.user.mention))
@@ -318,9 +302,9 @@ class Plugin(outlet.Plugin):
         if audit is None:
             raise ValueError("Member ban not found in audit log.")
 
-        embed = self.untimeout_or_unban_embed("Unban", audit.user, user, datetime.utcnow())
-
-        await self.mod_log.send(embed=embed)
+        await self.mod_log.send(format_msg(UNBAN,
+                                           mod=audit.user.mention,
+                                           user=user))
 
     async def on_member_remove(self, member):
         """check if member was kicked and if so, log"""
@@ -338,9 +322,10 @@ class Plugin(outlet.Plugin):
         if audit is None:
             return
 
-        embed = self.ban_or_kick_embed("Kick", audit.user, member, audit.reason, datetime.utcnow())
-
-        await self.mod_log.send(embed=embed)
+        await self.mod_log.send(format_msg(KICK,
+                                           mod=audit.user.mention,
+                                           user=member,
+                                           reason=audit.reason))
 
         if audit.reason is None:
             await self.mod_log.send("{} please give reason when you kick!".format(audit.user.mention))
