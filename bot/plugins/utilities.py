@@ -95,17 +95,18 @@ class Plugin(outlet.Plugin):
 
     # welcome channel
 
-    join_msg = "Welcome to RSurf, {0.mention}. Please read #info and #rules while an admin ranks you."
-    leave_msg = "{0} just slid off a ramp. {0} is dead."
+    join_msg = "Welcome to RSurf, {0.mention}. Please read <#421152883262619659> and <#353623771145306113> while an " \
+               "admin ranks you."
+    leave_msg = "**{0}** just slid off a ramp. **{0}** is now dead."
 
     async def on_member_join(self, member):
         if self.welcome is None:
-            raise ValueError("welcome channel not found")
+            self.log.error("welcome channel not found")
 
-        self.welcome.send(self.join_msg.format(member))
+        await self.welcome.send(self.join_msg.format(member))
 
     async def on_member_remove(self, member):
         if self.welcome is None:
-            raise ValueError("welcome channel not found")
+            self.log.error("welcome channel not found")
 
-        self.welcome.send(self.leave_msg.format(member))
+        await self.welcome.send(self.leave_msg.format(member))
