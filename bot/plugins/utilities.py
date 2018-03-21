@@ -10,29 +10,17 @@ from functools import wraps
 import time
 
 
-# util decorators
-
-def no_punished(func):
-    if getattr(func, "is_command", False):
-        raise SyntaxError("@debug_only decorator should be placed under the @command decorator")
-
-    @wraps(func)
-    async def new_func(self_, ctx, *args):
-        if ctx.author.id != 231658954831298560:
-            raise errors.MissingPermission("This is a debug command and can only be used by reshanie#7510")
-
-        return await func(self_, ctx, *args)
-
-    return new_func
-
-
 # plugin
 
 class Plugin(outlet.Plugin):
     __plugin__ = "Utilities"
 
+    welcome = None
+
     async def on_ready(self):
         game = discord.Game(name="RSurf Bot | $help")
+
+        self.welcome = self.bot.get_channel(354117054422581258)  # get welcome channel
 
         await self.bot.change_presence(game=game)
 
@@ -104,3 +92,20 @@ class Plugin(outlet.Plugin):
     #             "channel": message.channel.name,
     #             "attachments": len(message.attachments)
     #         })
+
+    # welcome channel
+
+    join_msg = "Welcome to RSurf, {0.mention}. Please read #info and #rules while an admin ranks you."
+    leave_msg = "{0} just slid off a ramp. {0} is dead."
+
+    async def on_member_join(self, member):
+        if self.welcome is None:
+            raise ValueError("welcome channel not found")
+
+        self.welcome.send(self.join_msg.format(member))
+
+    async def on_member_remove(self, member):
+        if self.welcome is None:
+            raise ValueError("welcome channel not found")
+
+        self.welcome.send(self.leave_msg.format(member))
