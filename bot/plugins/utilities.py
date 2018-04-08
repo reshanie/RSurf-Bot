@@ -16,11 +16,13 @@ class Plugin(outlet.Plugin):
     __plugin__ = "Utilities"
 
     welcome = None
+    member_role = None
 
     async def on_ready(self):
         game = discord.Game(name="RSurf Bot | $help")
 
         self.welcome = self.bot.get_channel(354117054422581258)  # get welcome channel
+        self.member_role = discord.utils.get(self.welcome.guild.roles, id=353615956184006659)  # Surfer role
 
         await self.bot.change_presence(game=game)
 
@@ -33,22 +35,28 @@ class Plugin(outlet.Plugin):
                 except discord.errors.Forbidden:
                     pass
 
-    @outlet.command("roblox")
-    @outlet.cooldown(3)
-    async def get_roblox_username(self, ctx, user: Member):
-        """Check if a user is verified with RoVerify, and if so send their Roblox username."""
-
+    async def get_roblox_username(self, user):
         self.log.debug("checking {} for roblox account".format(user))
 
-        async with self.http.get("https://verify.eryn.io/api/user/{}".format(user.id)) as resp:
-            r = await resp.json()
+        try:
+            async with self.http.get("https://verify.eryn.io/api/user/{}".format(user.id)) as resp:
+                r = await resp.json()
 
-            roblox_username = r.get("robloxUsername")
-            if roblox_username:
-                return "{} is `{}` on Roblox.\n\nhttp://roblox.com/users/{}/profile".format(user, roblox_username,
-                                                                                            r["robloxId"])
-            else:
-                return "{} doesn't have a Roblox account in RoVerify's database.".format(user)
+                return r.get("robloxUsername", None), r.get("robloxId", None)
+        except:
+            return None, None
+
+    @outlet.command("roblox")
+    @outlet.cooldown(3)
+    async def roblox_cmd(self, ctx, user: Member):
+        """Check if a user is verified with RoVerify, and if so send their Roblox username."""
+
+        username, uid = await self.get_roblox_username(user)
+
+        if username:
+            return "{} is `{}` on Roblox.\n\nhttp://roblox.com/users/{}/profile".format(user, username, uid)
+        else:
+            return "{} doesn't have a Roblox account in RoVerify's database.".format(user)
 
     @outlet.command("invite")
     async def invite(self, ctx):
@@ -95,15 +103,24 @@ class Plugin(outlet.Plugin):
 
     # welcome channel
 
-    join_msg = "Welcome to RSurf, {0.mention}. Please read <#421152883262619659> and <#353623771145306113> while an " \
-               "admin ranks you."
+    unverified_join_msg = "Welcome to RSurf, {0.mention}. Please read <#421152883262619659> and <#353623771145306113>" \
+                          " while an admin ranks you."
+    verified_join_msg = "Welcome to RSurf, {0.mention}. Please read <#421152883262619659> and <#353623771145306113>"
+
     leave_msg = "**{0}** just slid off a ramp. **{0}** is now dead."
 
     async def on_member_join(self, member):
         if self.welcome is None:
             self.log.error("welcome channel not found")
 
-        await self.welcome.send(self.join_msg.format(member))
+        username, uid = await self.get_roblox_username(member)
+
+        if username is None:
+            await self.welcome.send(self.unverified_join_msg.format(member))
+        else:
+            await member.edit(roles=[self.member_role])
+
+            await self.welcome.send(self.verified_join_msg.format(member))
 
     async def on_member_remove(self, member):
         if self.welcome is None:
