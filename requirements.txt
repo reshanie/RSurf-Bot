@@ -4,5 +4,4 @@ aiohttp
 pygogo
 outlet
 furl
-keen
-psutil
+psycopg2

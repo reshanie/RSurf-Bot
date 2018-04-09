@@ -111,7 +111,8 @@ class Plugin(outlet.Plugin):
 
     async def on_member_join(self, member):
         if self.welcome is None:
-            self.log.error("welcome channel not found")
+            self.log.error("welcomejust"
+                           "any surf maps channel not found")
 
         username, uid = await self.get_roblox_username(member)
 

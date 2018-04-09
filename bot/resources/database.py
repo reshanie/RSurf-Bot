@@ -57,6 +57,8 @@ class PrivateServer(Base):
 
     submitter_id = Column(Numeric)
 
+    name = Column(Text)
+
 
 # Engine
 engine = create_engine(DB_URL)

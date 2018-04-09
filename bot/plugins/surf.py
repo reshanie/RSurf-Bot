@@ -102,7 +102,8 @@ class Plugin(outlet.Plugin):
         except Exception as e:
             self.log.error("error adding private server: {}".format(e))
         else:
-            private_server = self.PrivateServer(id=ps_id, url=url, message_id=msg.id, submitter_id=ctx.author.id)
+            private_server = self.PrivateServer(id=ps_id, url=url, message_id=msg.id, submitter_id=ctx.author.id,
+                                                name=title)
 
             self.db.add(private_server)  # add to db
 
