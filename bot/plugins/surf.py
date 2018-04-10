@@ -108,7 +108,7 @@ class Plugin(outlet.Plugin):
             self.db.add(private_server)  # add to db
 
             self.log.debug("committing db")
-            self.db.commit()
+            self.db.commit()ok wel
 
             await ctx.message.delete()
 
@@ -147,7 +147,7 @@ class Plugin(outlet.Plugin):
             return "Command failed. Try again, and if it still doesn't work, tell reshanie#7510"
 
     async def on_message_delete(self, message):
-        self.log.debug("message delete")
+        self.log.debug("message delete: {}".format(message.id))
 
         ps = self.db.query(self.PrivateServer).filter_by(message_id=message.id).first()  # check if message is PS
         if ps:  # private server message was deleted
