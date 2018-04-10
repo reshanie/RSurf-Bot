@@ -146,10 +146,10 @@ class Plugin(outlet.Plugin):
             print(e)
             return "Command failed. Try again, and if it still doesn't work, tell reshanie#7510"
 
-    async def on_message_delete(self, message):
-        self.log.debug("message delete: {}".format(message.id))
+    async def on_raw_message_delete(self, message_id, channel_id):
+        self.log.debug("message delete: {}".format(message_id))
 
-        ps = self.db.query(self.PrivateServer).filter_by(message_id=message.id).first()  # check if message is PS
+        ps = self.db.query(self.PrivateServer).filter_by(message_id=message_id).first()  # check if message is PS
         if ps:  # private server message was deleted
             self.log.info("Private server message was deleted from list")
 
