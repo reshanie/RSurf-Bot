@@ -11,7 +11,7 @@ PS_PREFIX = "https://www.roblox.com/games/272689493/surf?privateServerLinkCode="
 
 
 def snowflake():
-    return (int(time.time()) << 3) | randrange(255)
+    return (int(time.time()) << 3) | randrange(2**3)
 
 
 def check_private_server_link(url):
