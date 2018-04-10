@@ -57,7 +57,7 @@ class PrivateServer(Base):
 
     submitter_id = Column(Numeric)
 
-    name = Column(Text)
+    name = Column(Text, default="")
 
 
 # Engine
