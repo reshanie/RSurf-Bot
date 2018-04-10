@@ -108,7 +108,7 @@ class Plugin(outlet.Plugin):
             self.db.add(private_server)  # add to db
 
             self.log.debug("committing db")
-            self.db.commit()ok wel
+            self.db.commit()
 
             await ctx.message.delete()
 
