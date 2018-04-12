@@ -5,3 +5,4 @@ pygogo
 outlet
 furl
 psycopg2
+psutil

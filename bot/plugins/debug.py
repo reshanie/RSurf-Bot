@@ -7,6 +7,8 @@ import discord
 import outlet
 from outlet import errors
 
+import psutil
+
 
 def debug_only(func):
     if getattr(func, "is_command", False):
@@ -26,6 +28,14 @@ def debug_only(func):
 
 def tasks():
     return len([task for task in asyncio.Task.all_tasks() if not task.done()])
+
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+        if abs(num) < 1024.0:
+            return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f %s%s" % (num, 'Yi', suffix)
 
 
 # plugin
@@ -71,11 +81,25 @@ class Plugin(outlet.Plugin):
     @outlet.command("status", "uptime")
     async def get_status(self, ctx):
         """Gets status of bot, including information such as uptime and number of tasks running."""
+
         uptime = timedelta(0, int(time.time() - self.start_time))
 
         embed = discord.Embed(color=await self.bot.my_color(ctx.guild))
         embed.add_field(name="Uptime", value=str(uptime))
 
+        server_uptime = timedelta(0, int(time.time()) - int(psutil.boot_time()))
+
+        embed.add_field(name="Server Uptime", value=str(server_uptime))
+
         embed.add_field(name="Running Tasks", value=str(tasks()))
+
+        memory = psutil.virtual_memory()
+
+        used = sizeof_fmt(memory.used)
+        total = sizeof_fmt(memory.total)
+
+        mem_string = "{} / {} used".format(used, total)
+
+        embed.add_field(name="Memory", value=mem_string)
 
         await ctx.send(embed=embed)
