@@ -78,6 +78,8 @@ class Plugin(outlet.Plugin):
     async def add_private_server(self, ctx, url, *title):
         """Submit a private server for Surf to the <#376555570091524096> channel."""
 
+        title = " ".join(title)
+
         url = check_private_server_link(url)  # normalize URL
 
         if url is None:  # wasn't a link to surf private server
@@ -93,7 +95,7 @@ class Plugin(outlet.Plugin):
 
         try:
 
-            embed = discord.Embed(title=" ".join(title) if title else None, description="{}".format(url),
+            embed = discord.Embed(title=title if title else None, description="{}".format(url),
                                   color=await self.bot.my_color(ctx.guild))
 
             embed.set_footer(text="Submitted by {}".format(ctx.author))
