@@ -316,7 +316,10 @@ class Plugin(outlet.Plugin):
 
         await asyncio.sleep(1)
 
-        audit = await guild.audit_logs(limit=3, action=discord.AuditLogAction.kick).flatten()
+        t = int(time.time()) - 2
+        after = datetime.utcfromtimestamp(t)
+
+        audit = await guild.audit_logs(after=after, action=discord.AuditLogAction.kick).flatten()
 
         audit = discord.utils.get(audit, target=member)
         if audit is None:
